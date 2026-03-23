@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SRE Community Australia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f0e;
+      --bg2:       #111412;
+      --bg3:       #161a17;
+      --surface:   #1a1f1c;
+      --surface2:  #1f2521;
+      --border:    #2a3029;
+      --border2:   #354035;
+      --green:     #39ff8a;
+      --green-dim: #1a7a42;
+      --green-glow:rgba(57,255,138,0.12);
+      --amber:     #f5a623;
+      --amber-dim: #7a5010;
+      --red:       #ff4f4f;
+      --text:      #c8d5c0;
+      --text-dim:  #6b7d66;
+      --text-muted:#3d4d3a;
+      --white:     #e8f0e5;
+      --radius:    2px;
+      --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+      --font-display: 'Syne', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-mono);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* scanline overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+      );
+    }
+
+    ::selection { background: var(--green); color: var(--bg); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(13,15,14,0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: var(--white);
+    }
+    .nav-logo-mark {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 700;
+      color: var(--green);
+      border: 1px solid var(--green-dim);
+      padding: 4px 7px; letter-spacing: 1px;
+    }
+    .nav-logo-mark::before { content: '> '; color: var(--green-dim); }
+    .nav-logo-text { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.5px; }
+    .nav-links { display: flex; gap: 0; list-style: none; }
+    .nav-links li a {
+      text-decoration: none; color: var(--text-dim);
+      font-size: 12px; letter-spacing: 0.5px;
+      padding: 0 16px; height: 56px;
+      display: flex; align-items: center;
+      border-right: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+    .nav-links li:first-child a { border-left: 1px solid var(--border); }
+    .nav-links li a::before { content: './'; color: var(--text-muted); margin-right: 3px; }
+    .nav-links li a:hover { color: var(--green); background: var(--green-glow); }
+    .nav-cta {
+      background: transparent; color: var(--green);
+      border: 1px solid var(--green-dim); padding: 8px 18px;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+      cursor: pointer; text-decoration: none; letter-spacing: 0.5px;
+      transition: all 0.15s;
+    }
+    .nav-cta::before { content: '$ '; color: var(--green-dim); }
+    .nav-cta:hover { background: var(--green-glow); border-color: var(--green); box-shadow: 0 0 12px rgba(57,255,138,0.15); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      background: var(--bg);
+      padding: 100px 80px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero-grid-bg {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.25;
+      mask-image: radial-gradient(ellipse 80% 80% at 70% 50%, black 20%, transparent 80%);
+    }
+    .hero-scanline {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(57,255,138,0.015) 50%, transparent 100%);
+      animation: scanMove 8s linear infinite;
+    }
+    @keyframes scanMove { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
+
+    .hero-content { position: relative; max-width: 780px; }
+
+    .hero-prompt { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .prompt-path { font-size: 12px; color: var(--green-dim); }
+    .prompt-cursor {
+      width: 10px; height: 18px; background: var(--green);
+      animation: blink 1.1s step-end infinite; display: inline-block; vertical-align: middle;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 6vw, 82px);
+      font-weight: 800; line-height: 0.95;
+      letter-spacing: -2px; color: var(--white);
+      margin-bottom: 28px;
+    }
+    .hero-title .hl { color: var(--green); text-shadow: 0 0 30px rgba(57,255,138,0.3); }
+    .hero-title .dim { color: var(--text-dim); }
+
+    .hero-subtitle {
+      font-size: 13px; color: var(--text-dim);
+      line-height: 1.9; max-width: 560px;
+      margin-bottom: 40px; letter-spacing: 0.2px;
+    }
+    .hero-subtitle::before { content: '// '; color: var(--text-muted); }
+
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .btn-primary {
+      background: var(--green); color: var(--bg);
+      padding: 12px 24px; text-decoration: none;
+      font-family: var(--font-mono); font-weight: 700; font-size: 13px; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.15s;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    }
+    .btn-primary:hover { box-shadow: 0 0 20px rgba(57,255,138,0.4); transform: translateY(-1px); }
+
+    .btn-primary-alt {
+      background: transparent; color: var(--amber);
+      padding: 12px 24px; border: 1px solid var(--amber-dim);
+      text-decoration: none; font-family: var(--font-mono);
+      font-weight: 500; font-size: 13px; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.15s;
+    }
+    .btn-primary-alt:hover { background: rgba(245,166,35,0.08); border-color: var(--amber); }
+
+    .btn-secondary {
+      background: transparent; color: var(--text-dim);
+      padding: 12px 24px; border: 1px solid var(--border2);
+      text-decoration: none; font-family: var(--font-mono);
+      font-weight: 400; font-size: 13px; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--green-dim); color: var(--green); background: var(--green-glow); }
+
+    .hero-stats { display: flex; gap: 0; margin-top: 64px; border: 1px solid var(--border); }
+    .stat { padding: 20px 32px; border-right: 1px solid var(--border); flex: 1; }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: var(--font-display); font-size: 36px; font-weight: 800;
+      color: var(--green); line-height: 1; text-shadow: 0 0 20px rgba(57,255,138,0.25);
+    }
+    .stat-label { font-size: 11px; color: var(--text-dim); margin-top: 6px; letter-spacing: 0.5px; }
+    .stat-num.loading { opacity: 0.4; animation: statPulse 1.2s ease infinite; }
+    @keyframes statPulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
+
+    /* ── SECTIONS ── */
+    section { padding: 96px 80px; }
+    .section-label {
+      font-size: 11px; font-weight: 500; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--green);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-label::before { content: '##'; color: var(--green-dim); margin-right: 4px; }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 44px); font-weight: 800;
+      letter-spacing: -1px; line-height: 1.05;
+      color: var(--white); margin-bottom: 16px;
+    }
+    .section-subtitle {
+      font-size: 13px; color: var(--text-dim);
+      line-height: 1.8; max-width: 520px; margin-bottom: 48px; letter-spacing: 0.2px;
+    }
+    .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+    .section-header-text { flex: 1; }
+
+    /* ── ABOUT ── */
+    #about { background: var(--bg2); border-top: 1px solid var(--border); }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+    .about-text p { font-size: 13px; color: var(--text-dim); line-height: 1.9; margin-bottom: 16px; }
+    .about-text p::before { content: '> '; color: var(--text-muted); }
+    .about-pillars { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; }
+    .pillar {
+      padding: 16px 20px; background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--green-dim);
+      display: flex; gap: 14px; align-items: flex-start; transition: border-color 0.15s;
+    }
+    .pillar:hover { border-left-color: var(--green); }
+    .pillar-icon { font-size: 18px; line-height: 1.4; }
+    .pillar-title { font-weight: 700; font-size: 13px; color: var(--white); margin-bottom: 3px; }
+    .pillar-desc { font-size: 12px; color: var(--text-dim); }
+
+    .about-terminal { background: var(--bg); border: 1px solid var(--border); }
+    .terminal-titlebar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .term-dot.red { background: #ff5f57; }
+    .term-dot.yellow { background: #febc2e; }
+    .term-dot.green { background: #28c840; }
+    .terminal-title { font-size: 11px; color: var(--text-dim); margin-left: 8px; letter-spacing: 0.5px; }
+    .terminal-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .t-line { font-size: 12px; display: flex; gap: 10px; align-items: baseline; }
+    .t-prompt { color: var(--green-dim); flex-shrink: 0; }
+    .t-cmd { color: var(--white); }
+    .t-output { color: var(--text-dim); padding-left: 20px; font-size: 12px; }
+    .t-key { color: var(--amber); }
+    .t-val { color: var(--green); }
+    .t-comment { color: var(--text-muted); font-style: italic; }
+
+    /* ── EVENTS ── */
+    #events { background: var(--bg); border-top: 1px solid var(--border); }
+    .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .event-card { background: var(--bg2); text-decoration: none; color: var(--text); display: block; transition: background 0.15s; }
+    .event-card:hover { background: var(--surface); }
+    .event-card-top {
+      padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .event-date-num {
+      font-family: var(--font-display); font-size: 48px; font-weight: 800;
+      color: var(--green); line-height: 1; text-shadow: 0 0 16px rgba(57,255,138,0.2);
+    }
+    .event-date-month { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+    .event-badge { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 8px; border: 1px solid; }
+    .event-badge.melb { color: var(--green); border-color: var(--green-dim); }
+    .event-badge.syd  { color: var(--amber); border-color: var(--amber-dim); }
+    .event-badge.online { color: var(--text-dim); border-color: var(--border2); }
+    .event-card-body { padding: 16px 24px; }
+    .event-type { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+    .event-title { font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 10px; line-height: 1.3; }
+    .event-meta { font-size: 11px; color: var(--text-dim); display: flex; gap: 16px; flex-wrap: wrap; }
+    .event-card-footer { padding: 12px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .event-rsvp { font-size: 11px; color: var(--green); letter-spacing: 0.5px; }
+    .event-rsvp::before { content: '$ '; color: var(--green-dim); }
+    .meetup-banner {
+      margin-top: 24px; padding: 20px 28px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap;
+    }
+    .meetup-banner-text { font-size: 12px; color: var(--text-dim); }
+    .meetup-banner-text strong { color: var(--white); }
+    .meetup-banner-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ── VIDEOS ── */
+    #videos { background: var(--bg2); border-top: 1px solid var(--border); }
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .video-card { background: var(--bg); }
+    .video-embed { position: relative; padding-bottom: 56.25%; height: 0; }
+    .video-embed iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    .video-caption { padding: 14px 18px; border-top: 1px solid var(--border); background: var(--bg2); }
+    .video-caption-title { font-size: 13px; color: var(--white); font-weight: 500; margin-bottom: 4px; }
+    .video-caption-meta { font-size: 11px; color: var(--text-dim); }
+    .video-caption-meta::before { content: '// '; color: var(--text-muted); }
+
+    /* ── GALLERY ── */
+    #gallery { background: var(--bg); border-top: 1px solid var(--border); }
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border); border: 1px solid var(--border);
+    }
+    .gallery-item { position: relative; cursor: pointer; background: var(--surface); overflow: hidden; }
+    .gallery-item:first-child { grid-column: span 2; grid-row: span 2; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; filter: grayscale(20%) brightness(0.85); }
+    .gallery-item:hover img { transform: scale(1.04); filter: grayscale(0%) brightness(1); }
+    .gallery-item-placeholder {
+      width: 100%; height: 200px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: var(--text-muted); gap: 8px; font-size: 11px; letter-spacing: 1px;
+    }
+    .gallery-item:first-child .gallery-item-placeholder { height: 412px; }
+    .gallery-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(13,15,14,0.85), transparent 60%);
+      opacity: 0; transition: opacity 0.2s;
+      display: flex; align-items: flex-end; padding: 14px;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    .gallery-overlay-text { color: var(--green); font-size: 11px; letter-spacing: 1px; }
+    .gallery-overlay-text::before { content: '> '; color: var(--green-dim); }
+    .gallery-upload { margin-top: 16px; padding: 16px 20px; border: 1px dashed var(--border2); color: var(--text-muted); font-size: 11px; letter-spacing: 0.5px; }
+    .gallery-upload::before { content: '// '; }
+
+    /* ── STATE OF SRE ── */
+    #salary { background: var(--bg2); border-top: 1px solid var(--border); }
+    .salary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+    .salary-features { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+    .salary-feature {
+      display: flex; gap: 14px; padding: 16px 18px;
+      background: var(--surface); border: 1px solid var(--border); border-left: 2px solid var(--green-dim);
+    }
+    .salary-feature-icon { font-size: 16px; line-height: 1.4; }
+    .salary-feature-title { font-weight: 700; font-size: 13px; color: var(--white); margin-bottom: 2px; }
+    .salary-feature-desc { font-size: 12px; color: var(--text-dim); }
+    .salary-cta-box { background: var(--bg); border: 1px solid var(--border); }
+    .salary-cta-top {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 12px 24px; display: flex; align-items: center; gap: 8px;
+    }
+    .salary-cta-title-bar { font-size: 11px; color: var(--text-dim); letter-spacing: 0.5px; }
+    .salary-cta-body { padding: 32px; }
+    .salary-cta-body h3 {
+      font-family: var(--font-display); font-size: 26px; font-weight: 800;
+      color: var(--white); margin-bottom: 10px; line-height: 1.1;
+    }
+    .salary-cta-body h3 span { color: var(--green); }
+    .salary-cta-body p { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; line-height: 1.8; }
+    .salary-cta-note { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; }
+    .salary-cta-note::before { content: '// '; }
+
+    /* ── SPONSORS ── */
+    #sponsors { background: var(--bg); border-top: 1px solid var(--border); }
+    .sponsors-tier { margin-bottom: 40px; }
+    .tier-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .tier-label::before { content: '# '; }
+    .sponsors-row { display: flex; flex-wrap: wrap; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .sponsor-card {
+      background: var(--bg2); padding: 20px 32px;
+      display: flex; align-items: center; justify-content: center;
+      min-width: 160px; height: 72px;
+      color: var(--text-dim); font-size: 13px; transition: all 0.15s; text-decoration: none; flex: 1;
+    }
+    .sponsor-card:hover { background: var(--surface); color: var(--green); }
+    .sponsor-card.add { color: var(--text-muted); font-size: 11px; letter-spacing: 0.5px; border: 1px dashed var(--border2); background: transparent; }
+    .become-sponsor {
+      margin-top: 24px; padding: 24px 28px; background: var(--surface); border: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap;
+    }
+    .become-sponsor h3 { font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+    .become-sponsor p { font-size: 12px; color: var(--text-dim); }
+
+    /* ── NEWSLETTER ── */
+    #newsletter { background: var(--bg2); border-top: 1px solid var(--border); }
+    .newsletter-inner { max-width: 580px; }
+    .newsletter-form { display: flex; gap: 0; }
+    .newsletter-form input {
+      flex: 1; padding: 12px 16px;
+      background: var(--bg); border: 1px solid var(--border2); border-right: none;
+      font-family: var(--font-mono); font-size: 13px; color: var(--white);
+      outline: none; transition: border-color 0.15s;
+    }
+    .newsletter-form input:focus { border-color: var(--green-dim); }
+    .newsletter-form input::placeholder { color: var(--text-muted); }
+    .newsletter-note { font-size: 11px; color: var(--text-muted); margin-top: 10px; letter-spacing: 0.3px; }
+    .newsletter-note::before { content: '// '; }
+
+    /* ── SOCIALS ── */
+    #social { background: var(--bg); border-top: 1px solid var(--border); }
+    .social-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .social-card {
+      background: var(--bg2); text-decoration: none; color: var(--text);
+      display: flex; flex-direction: column; gap: 8px; padding: 24px 20px; transition: background 0.15s;
+    }
+    .social-card:hover { background: var(--surface); }
+    .social-icon { font-size: 20px; }
+    .social-name { font-weight: 700; font-size: 13px; color: var(--white); }
+    .social-handle { font-size: 11px; color: var(--text-muted); }
+    .social-arrow { margin-top: auto; font-size: 12px; color: var(--green); }
+    .social-arrow::before { content: '$ open '; color: var(--green-dim); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg); border-top: 1px solid var(--border);
+      padding: 32px 80px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+    }
+    .footer-logo { color: var(--green); font-size: 13px; letter-spacing: 0.5px; }
+    .footer-logo::before { content: '> '; color: var(--green-dim); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 11px; letter-spacing: 0.5px; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--green); }
+    .footer-copy { font-size: 11px; color: var(--text-muted); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      section { padding: 64px 24px; }
+      nav { padding: 0 20px; }
+      #hero { padding: 90px 24px 64px; }
+      .about-grid, .salary-grid { grid-template-columns: 1fr; }
+      .gallery-grid { grid-template-columns: repeat(2,1fr); }
+      .gallery-item:first-child { grid-column: span 2; }
+      footer { padding: 28px 24px; flex-direction: column; align-items: flex-start; }
+      .nav-links { display: none; }
+      .hero-stats { flex-direction: column; gap: 0; }
+    }
+
+    /* ── FADE IN ── */
+    .fade-in { opacity: 0; transform: translateY(16px); animation: fadeUp 0.5s ease forwards; }
+    @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+    .fade-in:nth-child(1) { animation-delay: 0.05s; }
+    .fade-in:nth-child(2) { animation-delay: 0.15s; }
+    .fade-in:nth-child(3) { animation-delay: 0.25s; }
+    .fade-in:nth-child(4) { animation-delay: 0.35s; }
+    .fade-in:nth-child(5) { animation-delay: 0.45s; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <div class="nav-logo-mark">SRE</div>
+    <span class="nav-logo-text">SRE Community Australia</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">about</a></li>
+    <li><a href="#events">events</a></li>
+    <li><a href="#videos">resources</a></li>
+    <li><a href="https://state-of-sre-anz.vercel.app/" target="_blank">state-of-sre</a></li>
+    <li><a href="#sponsors">sponsors</a></li>
+    <li><a href="#newsletter">newsletter</a></li>
+  </ul>
+  <a href="#events" class="nav-cta">upcoming-events</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-scanline"></div>
+  <div class="hero-content">
+    <div class="hero-prompt fade-in">
+      <span class="prompt-path">sre-community-au ~ $</span>
+      <span class="prompt-cursor"></span>
+    </div>
+    <h1 class="hero-title fade-in">
+      Where <span class="hl">reliability</span><br>
+      <span class="dim">engineers</span> connect.
+    </h1>
+    <p class="hero-subtitle fade-in">
+      A practitioner-led community for SREs, platform engineers, and infrastructure folks across Australia. Share knowledge, shape the craft, build what lasts.
+    </p>
+    <div class="hero-actions fade-in">
+      <a href="https://www.meetup.com/melbourne-sre-meetup/" target="_blank" class="btn-primary">Join on Meetup Melbourne →</a>
+      <a href="https://www.meetup.com/sydney-sre-meetup/?eventOrigin=home_groups_you_organize" target="_blank" class="btn-primary-alt">Join on Meetup Sydney →</a>
+      <a href="#events" class="btn-secondary">📅 upcoming events</a>
+    </div>
+    <div class="hero-stats fade-in">
+      <div class="stat">
+        <div class="stat-num" id="stat-members">800+</div>
+        <div class="stat-label">// community members</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-meetups">20+</div>
+        <div class="stat-label">// meetups held</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-cities">6</div>
+        <div class="stat-label">// cities represented</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-text">
+      <div class="section-label">About Us</div>
+      <h2 class="section-title">Built by practitioners,<br>for practitioners.</h2>
+      <p>SRE Community Australia is an independent, volunteer-run group dedicated to advancing the discipline of Site Reliability Engineering across the Australian tech landscape.</p>
+      <p>We run regular meetups in Melbourne, Sydney, Brisbane, and beyond — bringing together engineers working on reliability, scalability, observability, and platform engineering at every scale.</p>
+      <div class="about-pillars">
+        <div class="pillar">
+          <div class="pillar-icon">🔧</div>
+          <div>
+            <div class="pillar-title">Real Talk, No Vendor Fluff</div>
+            <div class="pillar-desc">Practitioner-led sessions focused on real problems and hard-won lessons.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🌏</div>
+          <div>
+            <div class="pillar-title">Pan-Australian Network</div>
+            <div class="pillar-desc">Connecting reliability engineers across major Australian cities and remote teams.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📖</div>
+          <div>
+            <div class="pillar-title">Open Knowledge Sharing</div>
+            <div class="pillar-desc">Talks, workshops, and resources available to the whole community.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="about-terminal">
+      <div class="terminal-titlebar">
+        <div class="term-dot red"></div>
+        <div class="term-dot yellow"></div>
+        <div class="term-dot green"></div>
+        <span class="terminal-title">community-stats.sh</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">./get-stats --community au-sre</span></div>
+        <div class="t-output"><span class="t-comment"># Fetching community data...</span></div>
+        <div class="t-output"><span class="t-key">next_meetup</span>: <span class="t-val">Melbourne</span></div>
+        <div class="t-output"><span class="t-key">new_members_ytd</span>: <span class="t-val">+147</span></div>
+        <div class="t-output"><span class="t-key">topics_covered</span>: <span class="t-val">["SLOs","AI","Observability"]</span></div>
+        <div class="t-output"><span class="t-key">community_vibe</span>: <span class="t-val">"inclusive"</span></div>
+        <div class="t-output"><span class="t-key">total_members</span>: <span class="t-val">800+</span></div>
+        <div class="t-output"><span class="t-key">cities</span>: <span class="t-val">["MEL","SYD","BNE","PER","ADL","CBR"]</span></div>
+        <div class="t-line" style="margin-top:8px"><span class="t-prompt">$</span><span class="t-cmd" style="color:var(--green)">✓ done</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EVENTS -->
+<section id="events">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="section-label">Events</div>
+      <h2 class="section-title">Upcoming Meetups</h2>
+      <p class="section-subtitle">Join us in person or online. All experience levels welcome.</p>
+    </div>
+    <a href="https://www.meetup.com/melbourne-sre-meetup/" target="_blank" class="btn-secondary">view all on Meetup Melbourne →</a>
+  </div>
+  <div class="events-grid">
+    <a href="https://www.meetup.com/melbourne-sre-meetup/" target="_blank" class="event-card">
+      <div class="event-card-top">
+        <div><div class="event-date-num">24</div><div class="event-date-month">April 2025</div></div>
+        <span class="event-badge melb">Melbourne</span>
+      </div>
+      <div class="event-card-body">
+        <div class="event-type">Meetup · In Person</div>
+        <div class="event-title">SLOs in Practice: Beyond the Basics</div>
+        <div class="event-meta"><span>🕕 6:00 PM</span><span>📍 CBD</span></div>
+      </div>
+      <div class="event-card-footer">
+        <span style="font-size:11px;color:var(--text-muted)">24 RSVPs</span>
+        <span class="event-rsvp">RSVP on Meetup Melbourne</span>
+      </div>
+    </a>
+    <a href="https://www.meetup.com/melbourne-sre-meetup/" target="_blank" class="event-card">
+      <div class="event-card-top">
+        <div><div class="event-date-num">08</div><div class="event-date-month">May 2025</div></div>
+        <span class="event-badge online">Online</span>
+      </div>
+      <div class="event-card-body">
+        <div class="event-type">Workshop · Virtual</div>
+        <div class="event-title">AI Tooling Evaluation for SRE Teams</div>
+        <div class="event-meta"><span>🕒 3:00 PM AEST</span><span>💻 Virtual</span></div>
+      </div>
+      <div class="event-card-footer">
+        <span style="font-size:11px;color:var(--text-muted)">41 RSVPs</span>
+        <span class="event-rsvp">RSVP on Meetup Melbourne</span>
+      </div>
+    </a>
+    <a href="https://www.meetup.com/sydney-sre-meetup/?eventOrigin=home_groups_you_organize" target="_blank" class="event-card">
+      <div class="event-card-top">
+        <div><div class="event-date-num" style="color:var(--amber);text-shadow:0 0 16px rgba(245,166,35,0.2)">19</div><div class="event-date-month">June 2025</div></div>
+        <span class="event-badge syd">Sydney</span>
+      </div>
+      <div class="event-card-body">
+        <div class="event-type">Meetup · In Person</div>
+        <div class="event-title">Platform Engineering Panel: 2025 State of Play</div>
+        <div class="event-meta"><span>🕕 6:00 PM</span><span>📍 Surry Hills</span></div>
+      </div>
+      <div class="event-card-footer">
+        <span style="font-size:11px;color:var(--text-muted)">Coming soon</span>
+        <span class="event-rsvp" style="color:var(--amber)">Register interest on Meetup Sydney</span>
+      </div>
+    </a>
+  </div>
+  <div class="meetup-banner">
+    <div class="meetup-banner-text"><strong>Stay up to date.</strong> All events are managed through our Meetup groups. Follow us so you never miss a session.</div>
+    <div class="meetup-banner-btns">
+      <a href="https://www.meetup.com/melbourne-sre-meetup/" target="_blank" class="btn-primary">Join on Meetup Melbourne →</a>
+      <a href="https://www.meetup.com/sydney-sre-meetup/?eventOrigin=home_groups_you_organize" target="_blank" class="btn-primary-alt">Join on Meetup Sydney →</a>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section id="videos">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="section-label">Resources</div>
+      <h2 class="section-title">Talks, Guides & Sessions</h2>
+      <p class="section-subtitle">Catch up on past talks, workshops, and community resources.</p>
+    </div>
+    <a href="https://www.youtube.com" target="_blank" class="btn-secondary">all videos on YouTube →</a>
+  </div>
+  <div class="video-grid">
+    <div class="video-card" style="display:flex;flex-direction:column;">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--border);background:var(--surface);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+          <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);">Meetup Recap · Melbourne</span>
+          <span style="font-size:10px;color:var(--text-muted);letter-spacing:0.5px;">26 Feb 2026</span>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:6px;line-height:1.3;">SRE vs Platform Engineering</div>
+        <div style="font-size:12px;color:var(--amber);margin-bottom:14px;letter-spacing:0.3px;">Who actually owns what?</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8;margin-bottom:16px;">
+          7 key takeaways from a panel of practitioners at Netwealth — covering ownership models, observability pipelines, platform adoption, and how incidents create funding momentum.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
+          <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;"># panelists</div>
+          <div style="font-size:11px;color:var(--text-dim);">Rayna Tsimitakopoulos <span style="color:var(--text-muted);">· Head of Dev Experience, Netwealth</span></div>
+          <div style="font-size:11px;color:var(--text-dim);">Yann Vigara <span style="color:var(--text-muted);">· Principal Engineer, Operata</span></div>
+          <div style="font-size:11px;color:var(--text-dim);">Tony Mamacos <span style="color:var(--text-muted);">· Principal Member of Technical Staff, Oracle</span></div>
+          <div style="font-size:11px;color:var(--text-dim);">Shaun O'Keefe <span style="color:var(--text-muted);">· Principal Consultant, Aomodori</span></div>
+          <div style="font-size:11px;color:var(--text-dim);">Parveen Bhardwaj <span style="color:var(--text-muted);">· Staff SRE, SEER</span></div>
+        </div>
+      </div>
+      <div style="padding:14px 24px;background:var(--bg2);border-top:1px solid var(--border);margin-top:auto;">
+        <a href="./assets/SRE_Vs_Platform_Who_Owns_What.pdf" target="_blank" class="btn-primary" style="font-size:12px;clip-path:none;display:inline-flex;">$ download-recap.pdf →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="section-label">Gallery</div>
+  <h2 class="section-title">Community in Action</h2>
+  <p class="section-subtitle">Real people, real rooms, real conversations.</p>
+  <div class="gallery-grid">
+    <div class="gallery-item">
+      <div class="gallery-item-placeholder"><span style="font-size:28px">📸</span><span>ADD HERO PHOTO</span></div>
+      <div class="gallery-overlay"><span class="gallery-overlay-text">SRE Meetup Melbourne</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-placeholder"><span style="font-size:20px">📸</span><span>PHOTO</span></div>
+      <div class="gallery-overlay"><span class="gallery-overlay-text">Workshop</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-placeholder"><span style="font-size:20px">📸</span><span>PHOTO</span></div>
+      <div class="gallery-overlay"><span class="gallery-overlay-text">Panel Discussion</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-placeholder"><span style="font-size:20px">📸</span><span>PHOTO</span></div>
+      <div class="gallery-overlay"><span class="gallery-overlay-text">Networking</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-placeholder"><span style="font-size:20px">📸</span><span>PHOTO</span></div>
+      <div class="gallery-overlay"><span class="gallery-overlay-text">Lightning Talks</span></div>
+    </div>
+  </div>
+  <div class="gallery-upload">To add photos: replace placeholder divs with &lt;img src="your-image.jpg" alt="..."&gt; inside each .gallery-item</div>
+</section>
+
+<!-- STATE OF SRE -->
+<section id="salary">
+  <div class="salary-grid">
+    <div>
+      <div class="section-label">Community Report</div>
+      <h2 class="section-title">State of SRE Australia</h2>
+      <p class="section-subtitle">Help us build the most comprehensive report on the state of Site Reliability Engineering across Australia and New Zealand.</p>
+      <div class="salary-features">
+        <div class="salary-feature">
+          <div class="salary-feature-icon">🔒</div>
+          <div>
+            <div class="salary-feature-title">Anonymous & Private</div>
+            <div class="salary-feature-desc">No personally identifiable information collected.</div>
+          </div>
+        </div>
+        <div class="salary-feature">
+          <div class="salary-feature-icon">📊</div>
+          <div>
+            <div class="salary-feature-title">Results Shared with Community</div>
+            <div class="salary-feature-desc">Aggregated data published openly to all members.</div>
+          </div>
+        </div>
+        <div class="salary-feature">
+          <div class="salary-feature-icon">⚡</div>
+          <div>
+            <div class="salary-feature-title">Takes ~3 Minutes</div>
+            <div class="salary-feature-desc">Role, level, location, comp, and tech stack.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="salary-cta-box">
+      <div class="salary-cta-top">
+        <div class="term-dot red"></div>
+        <div class="term-dot yellow"></div>
+        <div class="term-dot green"></div>
+        <span class="salary-cta-title-bar" style="margin-left:8px">state-of-sre-2025.sh</span>
+      </div>
+      <div class="salary-cta-body">
+        <h3>What's the <span>state of SRE</span><br>in Australia?</h3>
+        <p>162 engineers have already contributed. Add your voice and get access to the full anonymised results.</p>
+        <a href="https://state-of-sre-anz.vercel.app/" target="_blank" class="btn-primary">$ contribute to the report →</a>
+        <div class="salary-cta-note">Results updated quarterly · All experience levels welcome</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPONSORS -->
+<section id="sponsors">
+  <div class="section-label">Sponsors & Partners</div>
+  <h2 class="section-title">Supported by great companies.</h2>
+  <p class="section-subtitle">Our sponsors make free, high-quality events possible for the whole community.</p>
+  <div class="sponsors-tier">
+    <div class="tier-label">Platinum Partners</div>
+    <div class="sponsors-row">
+      <a href="#" target="_blank" class="sponsor-card">Your Sponsor</a>
+      <a href="#" target="_blank" class="sponsor-card">Your Sponsor</a>
+      <div class="sponsor-card add">+ add sponsor</div>
+    </div>
+  </div>
+  <div class="sponsors-tier">
+    <div class="tier-label">Community Supporters</div>
+    <div class="sponsors-row">
+      <a href="#" target="_blank" class="sponsor-card">Supporter</a>
+      <a href="#" target="_blank" class="sponsor-card">Supporter</a>
+      <a href="#" target="_blank" class="sponsor-card">Supporter</a>
+      <div class="sponsor-card add">+ add sponsor</div>
+    </div>
+  </div>
+  <div class="become-sponsor">
+    <div>
+      <h3>Interested in sponsoring?</h3>
+      <p>Support Australia's SRE community and connect with senior engineers across the country.</p>
+    </div>
+    <a href="/cdn-cgi/l/email-protection#9cf4f9f0f0f3dcefeef9fde9efe8eefdf0f5fdb2fff3f1" class="btn-primary">$ get in touch →</a>
+  </div>
+</section>
+
+<!-- NEWSLETTER -->
+<section id="newsletter">
+  <div class="newsletter-inner">
+    <div class="section-label">Stay Connected</div>
+    <h2 class="section-title">SRE dispatches, straight to your inbox.</h2>
+    <p class="section-subtitle">Event announcements, talk recaps, community news, and the occasional link worth reading.</p>
+    <div class="newsletter-form">
+      <input type="email" placeholder="your@email.com" />
+      <a href="/cdn-cgi/l/email-protection#d2bab7bebebd92a1a0b7b3a7a1a6a0b3bebbb3fcb1bdbfeda1a7b0b8b7b1a6ef9cb7a5a1beb7a6a6b7a0f981bbb5bca7a2" class="btn-primary" style="clip-path:none;">subscribe →</a>
+    </div>
+    <div class="newsletter-note">No spam, ever. Unsubscribe any time.</div>
+  </div>
+</section>
+
+<!-- SOCIALS -->
+<section id="social">
+  <div class="section-label">Find Us</div>
+  <h2 class="section-title">Join the conversation.</h2>
+  <p class="section-subtitle">We're active across these platforms — come say hi.</p>
+  <div class="social-grid">
+    <a href="https://www.meetup.com/melbourne-sre-meetup/" target="_blank" class="social-card">
+      <div class="social-icon">📅</div>
+      <div class="social-name">Meetup Melbourne</div>
+      <div class="social-handle">melbourne-sre-meetup</div>
+      <div class="social-arrow">Meetup Melbourne</div>
+    </a>
+    <a href="https://www.meetup.com/sydney-sre-meetup/?eventOrigin=home_groups_you_organize" target="_blank" class="social-card">
+      <div class="social-icon">📅</div>
+      <div class="social-name">Meetup Sydney</div>
+      <div class="social-handle">sydney-sre-meetup</div>
+      <div class="social-arrow">Meetup Sydney</div>
+    </a>
+    <a href="https://linkedin.com" target="_blank" class="social-card">
+      <div class="social-icon">💼</div>
+      <div class="social-name">LinkedIn</div>
+      <div class="social-handle">SRE Community Australia</div>
+      <div class="social-arrow">linkedin</div>
+    </a>
+    <a href="https://twitter.com" target="_blank" class="social-card">
+      <div class="social-icon">𝕏</div>
+      <div class="social-name">Twitter / X</div>
+      <div class="social-handle">@SRECommunityAU</div>
+      <div class="social-arrow">twitter</div>
+    </a>
+    <a href="https://slack.com" target="_blank" class="social-card">
+      <div class="social-icon">💬</div>
+      <div class="social-name">Slack</div>
+      <div class="social-handle">sre-community-au.slack.com</div>
+      <div class="social-arrow">slack</div>
+    </a>
+    <a href="https://youtube.com" target="_blank" class="social-card">
+      <div class="social-icon">▶️</div>
+      <div class="social-name">YouTube</div>
+      <div class="social-handle">SRE Community AU</div>
+      <div class="social-arrow">youtube</div>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">SRE Community Australia</div>
+  <div class="footer-links">
+    <a href="#about">about</a>
+    <a href="#events">events</a>
+    <a href="#videos">resources</a>
+    <a href="https://state-of-sre-anz.vercel.app/" target="_blank">state-of-sre</a>
+    <a href="/cdn-cgi/l/email-protection#640c0108080b24171601051117101605080d054a070b09">contact</a>
+  </div>
+  <div class="footer-copy">© 2025 SRE Community Australia. Made with ❤️ by the community.</div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // ─────────────────────────────────────────────────────────────
+  // COMMUNITY STATS — Google Sheets integration
+  //
+  // SETUP INSTRUCTIONS:
+  //   1. Create a Google Sheet with these values:
+  //        A1: total member count  (e.g. 847)
+  //        A2: total meetups held  (e.g. 23)
+  //        A3: cities represented  (e.g. 6)
+  //   2. File → Share → "Anyone with the link" → Viewer
+  //   3. Copy the Sheet ID from the URL:
+  //        https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit
+  //   4. Replace PLACEHOLDER_SHEET_ID below with your actual Sheet ID
+  //   5. Leave SHEET_NAME as "Sheet1" unless you renamed your tab
+  // ─────────────────────────────────────────────────────────────
+
+  const SHEET_ID   = 'PLACEHOLDER_SHEET_ID';   // ← replace this
+  const SHEET_NAME = 'Sheet1';                  // ← rename if needed
+  const RANGE      = 'A1:A3';
+
+  const FALLBACK = { members: '800+', meetups: '20+', cities: '6' };
+
+  function formatStat(value, index) {
+    const num = parseInt(value, 10);
+    if (isNaN(num)) return value;
+    // Add '+' suffix to members and meetups to indicate growing numbers
+    return index < 2 ? num + '+' : String(num);
+  }
+
+  async function loadStats() {
+    if (SHEET_ID === 'PLACEHOLDER_SHEET_ID') return; // skip until connected
+
+    const elMembers = document.getElementById('stat-members');
+    const elMeetups = document.getElementById('stat-meetups');
+    const elCities  = document.getElementById('stat-cities');
+
+    [elMembers, elMeetups, elCities].forEach(el => {
+      el.classList.add('loading');
+      el.textContent = '...';
+    });
+
+    try {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}!${RANGE}?key=AIzaSyD-placeholder-replace-with-your-api-key`;
+      // NOTE: You'll also need a Google Sheets API key (free).
+      // Get one at: https://console.cloud.google.com → APIs → Sheets API → Credentials
+      // Replace 'AIzaSyD-placeholder-replace-with-your-api-key' above with your key.
+
+      const res  = await fetch(url);
+      const data = await res.json();
+      const rows = data.values || [];
+
+      const members = rows[0]?.[0];
+      const meetups = rows[1]?.[0];
+      const cities  = rows[2]?.[0];
+
+      elMembers.textContent = members ? formatStat(members, 0) : FALLBACK.members;
+      elMeetups.textContent = meetups ? formatStat(meetups, 1) : FALLBACK.meetups;
+      elCities.textContent  = cities  ? formatStat(cities,  2) : FALLBACK.cities;
+
+    } catch (err) {
+      // On any error, fall back to hardcoded values silently
+      elMembers.textContent = FALLBACK.members;
+      elMeetups.textContent = FALLBACK.meetups;
+      elCities.textContent  = FALLBACK.cities;
+    
